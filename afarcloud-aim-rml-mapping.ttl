@@ -1,0 +1,88 @@
+@prefix afc: <http://www.w3id.org/afarcloud/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix map: <file:///datasets/afarcloud/mapping/afarcloud-aim-rml-mapping.ttl#> .
+@prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix rr: <http://www.w3.org/ns/r2rml#> .
+@prefix sf: <http://www.opengis.net/ont/sf#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix virtrdf: <http://www.openlinksw.com/schemas/virtrdf#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+map:geometry a rr:TriplesMap ;
+    rml:logicalSource [ rml:iterator "$" ;
+            rml:referenceFormulation ql:JSONPath ;
+            rml:source "/datasets/afarcloud/input/example-input-obs.json" ] ;
+    rr:predicateObjectMap [ rr:objectMap [ rr:datatype virtrdf:Geometry ;
+                    rr:template "POINT({sensorData.longitude} {sensorData.latitude})" ] ;
+            rr:predicateMap [ rr:constant geo:asWKT ] ] ;
+    rr:subjectMap [ rr:class sf:Point ;
+            rr:template "http://www.w3id.org/afarcloud/pCoord?lat={sensorData.latitude}&amp;long={sensorData.longitude}" ] .
+
+map:observations a rr:TriplesMap ;
+    rml:logicalSource [ rml:iterator "$.multiVariableObservationData.observations[*]" ;
+            rml:referenceFormulation ql:JSONPath ;
+            rml:source "/datasets/afarcloud/input/example-input-obs.json" ] ;
+    rr:predicateObjectMap [ rr:objectMap [ rml:reference "resultTime" ;
+                    rr:datatype xsd:dateTime ] ;
+            rr:predicateMap [ rr:constant sosa:resultTime ] ],
+        [ rr:objectMap [ rr:template "urn:afc:observation:{observedProperty}:{resultTime}:q1" ;
+                    rr:termType rr:IRI ] ;
+            rr:predicateMap [ rr:constant sosa:hasResult ] ],
+        [ rr:objectMap [ rr:joinCondition [ rr:child "resultTime" ;
+                            rr:parent "sensorData.resultTime" ] ;
+                    rr:parentTriplesMap map:Feature ] ;
+            rr:predicateMap [ rr:constant sosa:hasFeatureOfInterest ] ],
+        [ rr:objectMap [ rr:joinCondition [ rr:child "resultTime" ;
+                            rr:parent "sensorData.resultTime" ] ;
+                    rr:parentTriplesMap map:sensor ] ;
+            rr:predicateMap [ rr:constant sosa:madeBySensor ] ],
+        [ rr:objectMap [ rr:template "http://www.w3id.org/afarcloud/{observedProperty}" ;
+                    rr:termType rr:IRI ] ;
+            rr:predicateMap [ rr:constant sosa:observedProperty ] ] ;
+    rr:subjectMap [ rr:class sosa:Observation ;
+            rr:template "urn:afc:observation:{observedProperty}:{resultTime}" ] .
+
+map:observations_results_units rml:logicalSource [ rml:iterator "$.multiVariableObservationData.observations[*]" ;
+            rml:referenceFormulation ql:JSONPath ;
+            rml:source "/datasets/afarcloud/input/example-input-obs.json" ] ;
+    rr:predicateObjectMap [ rr:objectMap [ rml:reference "result.value" ;
+                    rr:datatype xsd:int ] ;
+            rr:predicateMap [ rr:constant qudt:numericValue ] ],
+        [ rr:objectMap [ rr:template "{observedProperty}:{resultTime}:q1" ;
+                    rr:termType rr:Literal ] ;
+            rr:predicateMap [ rr:constant dc:identifier ] ],
+        [ rr:objectMap [ rr:joinCondition [ rr:child "observedProperty" ;
+                            rr:parent "observedProperty" ] ;
+                    rr:parentTriplesMap map:units ] ;
+            rr:predicateMap [ rr:constant qudt:unit ] ] ;
+    rr:subjectMap [ rr:class qudt:QuantityValue ;
+            rr:template "urn:afc:observation:{observedProperty}:{resultTime}:q1" ] .
+
+map:Feature a rr:TriplesMap ;
+    rml:logicalSource [ rml:iterator "$" ;
+            rml:referenceFormulation ql:JSONPath ;
+            rml:source "/datasets/afarcloud/input/example-input-obs.json" ] ;
+    rr:predicateObjectMap [ rr:objectMap [ rr:template "http://www.w3id.org/afarcloud/pCoord?lat={sensorData.latitude}&amp;long={sensorData.longitude}" ;
+                    rr:termType rr:IRI ] ;
+            rr:predicateMap [ rr:constant geo:hasGeometry ] ] ;
+    rr:subjectMap [ rr:class geo:Feature ;
+            rr:template "http://www.w3id.org/afarcloud/poi?lat={sensorData.latitude}&amp;long={sensorData.longitude}" ] .
+
+map:sensor a rr:TriplesMap ;
+    rml:logicalSource [ rml:iterator "$" ;
+            rml:referenceFormulation ql:JSONPath ;
+            rml:source "/datasets/afarcloud/input/example-input-obs.json" ] ;
+    rr:subjectMap [ rr:class afc:AfarcloudSensors,
+                afc:SoilSensor ;
+            rr:template "urn:afc:AS03:cropsManagement:RISE:{sensorData.resourceType}:{sensorData.resourceId}" ] .
+
+map:units a rr:TriplesMap ;
+    rml:logicalSource [ rml:iterator "$.sensorData.observations[*]" ;
+            rml:referenceFormulation ql:JSONPath ;
+            rml:source "/datasets/afarcloud/input/example-input-obs.json" ] ;
+    rr:subjectMap [ rr:class qudt:Unit ;
+            rr:template "{uom}" ] .
+
