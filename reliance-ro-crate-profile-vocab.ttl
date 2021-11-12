@@ -234,9 +234,9 @@ reliance:ExecutableResearchObject a owl:Class ;
 				rdfs:comment "An executable research object is a research object that aggregates at least one artifact of executable type, e.g., python script, Jupyter Notebook, R script or any other code or software artifact. It might of course aggregates any other kind of resources.";
 				rdfs:isDefinedBy reliance: .
 
-### https://w3id.org/ro/earth-science/JupterNotebook
-reliance:JupterNotebook a owl:Class ;
-				rdfs:label "Jupter Notebook" ;   
+### https://w3id.org/ro/earth-science/JupyterNotebook
+reliance:JupyterNotebook a owl:Class ;
+				rdfs:label "Jupyter Notebook" ;   
 				rdfs:comment "Document produced by the Jupyter Notebook App, which contain both computer code (e.g. python) and rich text elements (paragraph, equations, figures, links, etc). Notebook are both human-readable documents as well as executable documents.";
 				rdfs:isDefinedBy reliance: .
 
