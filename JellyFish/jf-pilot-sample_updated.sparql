@@ -1,0 +1,145 @@
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dcat: <http://www.w3.org/ns/dcat#>
+PREFIX dct:  <http://purl.org/dc/terms/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX base: <http://w3id.org/foodie/lucas/lcvalue>
+PREFIX sosa:  <http://www.w3.org/ns/sosa/> 
+PREFIX owl:   <http://www.w3.org/2002/07/owl#> 
+PREFIX glosis_cm: <http://w3id.org/glosis/model/common#>
+PREFIX glosis_lh: <http://w3id.org/glosis/model/layerhorizon#> 
+PREFIX glosis_cl: <http://w3id.org/glosis/model/codelists#> 
+PREFIX glosis_sp: <http://w3id.org/glosis/model/siteplot#> 
+PREFIX glosis_pr: <http://w3id.org/glosis/model/profile#> 
+PREFIX iso19103: <http://def.seegrid.csiro.au/isotc211/iso19103/2005/basic#> 
+PREFIX iso28258: 	<http://w3id.org/glosis/model/iso28258/2013#> 
+PREFIX qudt: <http://qudt.org/schema/qudt/> 
+PREFIX unit: <http://qudt.org/vocab/unit/> 
+PREFIX sosa:  <http://www.w3.org/ns/sosa/> 
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX oim-jf: <https://w3id.org/iliad/oim/jellyfish>
+PREFIX wgs84: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+PREFIX dwc: <http://rs.tdwg.org/dwc/terms/>
+PREFIX oim-jf: <http://w3id.org/iliad/oim/jellyfish#>
+
+
+### observation collection
+CONSTRUCT {
+  ?obs_col_URI a sosa:ObservationCollection ;
+  	rdfs:label ?obs_col_label ;
+	sosa:observedProperty ?property_URI ;
+	sosa:madeBySensor ?sensor_URI ;
+	sosa:hasFeatureOfInterest ?feature_URI ;
+	sosa:usedProcedure ?activity_URI ;
+	sosa:resultTime ?Date ;
+  	sosa:phenomenonTime ?Date ; 
+	sosa:hasMember ?obs_URI ;
+}  	
+FROM <file:jf-pilot-sample.csv> 
+WHERE {
+	BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/observation/', ?ObsID)) AS ?obs_col_URI)
+	BIND (STRLANG(CONCAT('Jelly fish observation collection #', ?ObsID),"en") AS ?obs_col_label)
+	BIND (URI('http://w3id.org/iliad/jellyfish/property/jellyFishAbundanceProperty') AS ?property_URI)
+	BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/sensor/', ?IndID)) AS ?sensor_URI)
+	BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/feature/', ?ObsID,'-',?Location_20_Zones_ID)) AS ?feature_URI)
+	BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/activity/', ?Activity)) AS ?activity_URI)	  
+	BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/observation/', ?ObsID,'-',?Location_20_Zones_ID,'-',?IndID,'-',?Species)) AS ?obs_URI)  
+}
+
+
+### observation 
+CONSTRUCT {
+  ?obs_URI a sosa:Observation ;
+  	rdfs:label ?obs_label ;  	
+  	sosa:hasResult ?result_URI ;
+	rdfs:comment ?obs_comment_en ;
+	rdfs:comment ?obs_comment_he ;
+}  	
+FROM <file:jf-pilot-sample.csv> 
+WHERE {
+  	BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/observation/', ?ObsID,'-',?Location_20_Zones_ID,'-',?IndID,'-',?Species)) AS ?obs_URI)
+  	BIND (STRLANG(CONCAT('Jelly fish observation #', ?ObsID,' location id: ',?Location_20_Zones_ID,' sensor: ',?IndID,' species: ',?Species),"en") AS ?obs_label)	    
+	BIND (IF((?Species != "-" && ?Species != ""),URI(CONCAT('http://w3id.org/iliad/jellyfish/observation/', ?ObsID,'-',?Location_20_Zones_ID,'-',?IndID,'-',?Species,'/result')),URI('http://w3id.org/iliad/jellyfish/observation/emptyResult')) AS ?result_URI)
+	BIND (STRLANG(?Comments_Eng,"en") AS ?obs_comment_en)	    
+	BIND (STRLANG(?Comments_Heb,"he") AS ?obs_comment_he)	    
+	#OPTIONAL { FILTER (?Species != "-" && ?Species != "")
+    #  BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/observation/', ?ObsID,'-',?Location_20_Zones_ID,'-',?Species,'/result')) AS ?result_URI)
+  	#}
+	#BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/feature/', ?ObsID,'-',?Species)) AS ?feature_URI)
+	#BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/sensor/', ?ObsID,'-',?Species)) AS ?sensor_URI)
+	#BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/observation/', ?ObsID,'-',?Species,'/result')) AS ?result_URI)	    
+	#FILTER (?Species != "-" && ?Species != "")
+}	
+
+### feature of interest
+CONSTRUCT {
+  ?feature_URI a sosa:FeatureOfInterest, wgs84:Point ;
+  	rdfs:label ?feature_label ;
+  	wgs84:lat ?lat ;
+  	wgs84:long ?lng ;
+  	dwc:locality ?Location_20_Zones_ID ;
+  	oim-jf:distanceFromShore ?Distance_from_coast
+}  	
+FROM <file:jf-pilot-sample.csv> 
+WHERE {
+  BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/feature/', ?ObsID,'-',?Location_20_Zones_ID)) AS ?feature_URI)	    
+  BIND (STRLANG(CONCAT('Feature of interest for JF observation #', ?ObsID,' location id: ',?Location_20_Zones_ID),"en") AS ?feature_label)
+#  FILTER (?Species != "-" && ?Species != "")
+}
+
+### observed property
+CONSTRUCT {
+  ?property_URI a sosa:ObservableProperty ;
+  	rdfs:label ?property_label ;
+}  	
+FROM <file:jf-pilot-sample.csv> 
+WHERE {
+  BIND (URI('http://w3id.org/iliad/jellyfish/property/jellyFishAbundanceProperty') AS ?property_URI)	    	    
+  BIND (STRLANG('Jelly Fish Abundance',"en") AS ?property_label)
+}
+
+### observation result
+CONSTRUCT {
+  ?result_URI a sosa:Result, oim-jf:JellyFishAbundance ;
+  	rdfs:label ?result_label ;
+  	oim-jf:densityOfJF ?Quantity_Rank ;
+	oim-jf:quantityOfJF ?Quantity ; 
+  	dwc:sampleSizeValue ?Size_Rank; 
+  	dwc:scientificName ?Species ;
+    oim-jf:wormsConcept ?AphiaID ;
+	oim-jf:stingByJF ?Stinging ;
+	oim-jf:beachedJF ?Jellies_on_the_beach ;
+}  	
+FROM <file:jf-pilot-sample.csv> 
+WHERE {
+  BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/observation/', ?ObsID,'-',?Location_20_Zones_ID,'-',?IndID,'-',?Species,'/result')) AS ?result_URI)	    
+  BIND (STRLANG(CONCAT('Result for JF observation #', ?ObsID,' location id: ',?Location_20_Zones_ID,' sensor: ',?IndID,' species: ',?Species),"en") AS ?result_label)
+  #BIND (URI(CONCAT('https://www.marinespecies.org/aphia.php?p=taxlist&tName=', ?Species)) AS ?worms_URL)
+  FILTER (?Species != "-" && ?Species != "")
+}
+
+### human sensor
+CONSTRUCT {
+  ?sensor_URI a sosa:Sensor, oim-jf:HumanSensor ;
+  	rdfs:label ?sensor_label ;
+  	oim-jf:agentConfidence ?Gold_User ;
+#	oim-jf:activityAtSighting ?Activity ;
+}  	
+FROM <file:jf-pilot-sample.csv> 
+WHERE {
+  BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/sensor/', ?IndID)) AS ?sensor_URI)
+  BIND (STRLANG(CONCAT('Human sensor: ', ?IndID, ' - golden: ',?Gold_User),"en") AS ?sensor_label)
+#  FILTER (?Species != "-" && ?Species != "")
+}
+
+### activity procedure 
+CONSTRUCT {
+  ?activity_URI a sosa:Procedure ;
+  	rdfs:label ?Activity ;
+#	oim-jf:activityAtSighting ?Activity ;
+}  	
+FROM <file:jf-pilot-sample.csv> 
+WHERE {
+  BIND (URI(CONCAT('http://w3id.org/iliad/jellyfish/activity/', ?Activity)) AS ?activity_URI)
+#  FILTER (?Species != "-" && ?Species != "")
+}
