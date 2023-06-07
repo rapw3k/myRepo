@@ -1,0 +1,103 @@
+<html lang="en">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link type="text/css" href="http://rdforms.com/release/dijit/themes/claro/claro.css" rel="stylesheet" />
+    <link type="text/css" href="http://rdforms.com/release/rdforms/view/resources/rdforms.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="./css/cpsv.css">
+    <script src="./release/dojo/dojo.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script src="./js/convert.js"></script>
+    <script src="./js/download.js"></script>
+    <script src="./js/import.js"></script>
+    <script src="./js/openTab.js"></script>
+</head>
+
+<body class="claro" onLoad="document.getElementById('editorButton').click();">
+    <script type="text/javascript">
+        require([
+            'rdfjson/Graph',             //Rdfjson Graph API
+            'rdforms/template/ItemStore', //Stores all the RDForm templates
+            'rdforms/apps/Experiment',        //The editor User interface
+            'dojo/json',
+            'dojo/text!./samples/emptyRDF.json',
+            'dojo/text!./template/DCATtemplate.json',
+            'dojo/domReady!'             //Wait until the dom is ready.
+        ], function (Graph, ItemStore, Experiment, json, emptyRDF, DCAT2) {
+            /*Setup the editor.
+            Create the graph, itemstore and templatebundle
+            Create a new experiment inside the container div and start it*/
+            var graph = new Graph(json.parse(emptyRDF));
+            var itemStore = new ItemStore();
+            var bundle = itemStore.registerBundle({ source: json.parse(DCAT2) });
+            var e = new Experiment({
+                graph: graph,
+                template: bundle.getRoot(),
+                hideTemplate: true
+            }, "body");
+            e.startup();
+
+
+            /*Append a download and Browse button to the ribbon in the RDF tab and add the onclick functionality to it*/
+            /*Append a button to the ribbon in the RDF tab*/
+            $('#dijit_layout_TabContainer_1_tablist').append("<button>download</button>");
+            var buttons = document.getElementById("dijit_layout_TabContainer_1_tablist").getElementsByTagName("BUTTON");
+            /*Add the onclick event to the button. Download the text to a local file.*/
+            buttons[0].onclick = function () {
+                downloadClicked();
+            };
+
+            /*Append a Browse button to the ribbon in the RDF tab and add the onclick functionality to it*/
+            $('#dijit_layout_TabContainer_1_tablist').append("<input type='file' accept='text/xml' onchange='openFile(event)'>");
+
+            /*When the "Editor" tab is clicked, convert RDF to Editor format*/
+            $("div[widgetid='dijit_layout_TabContainer_0_tablist_dijit_layout_ContentPane_0']")[0].onclick = function () {
+                convertToEditor();
+            };
+
+            /*When the "Presenter" tab is clicked, convert RDF to Editor format*/
+            $("div[widgetid='dijit_layout_TabContainer_0_tablist_dijit_layout_ContentPane_1']")[0].onclick = function () {
+                convertToEditor();
+            };
+
+            /*When the "RDF data" tab is clicked, convert RDF to CPSV-AP compliant format*/
+            $("div[widgetid='dijit_layout_TabContainer_0_tablist_dijit__WidgetsInTemplateMixin_0']")[0].onclick = function () {
+                convertToCPSV();
+            };
+
+            $("div[widgetid='dijit_layout_TabContainer_1_tablist_dijit_layout_ContentPane_4']").css('display', 'none');
+
+        });
+    </script>
+
+    <header class="banner">
+        <a id="logobanner" href="#"><img src="./images/CPSV-AP_logo.png" width="70" height="70" float="left"
+                alt="CPSV-AP logo" /></a>
+        <h1>BRegDCAT-AP v2 Creator</h1>
+
+        <div class="tab">
+            <button class="tablinks" id="editorButton" onclick="openTab(event, 'editor') ">Editor</button>
+            <button class="tablinks" onclick="openTab(event, 'about')">About</button>
+        </div>
+    </header>
+
+    <div id="about" class="tabcontent" display: "none">
+        <h2>About the BRegDCAT-AP v2 Creator</h2>
+        <p>
+            This is a proof of concept tool for the creation of RDF graphs 
+            that follow the DCAT Application profile for Base Registries in 
+            Europe (BRegDCAT-AP) v2 specification.
+        </p>
+        <p>
+            This tool will allow European public administrations to describe base 
+            registries in an easy-to-use web form, exporting these descriptions 
+            in BRegDCAT-AP v2 compliant machine-readable formats to store locally on a computer.
+        </p>
+    </div>
+
+    <div id="editor" class="tabcontent">
+        <div class="body" id="body"></div>
+    </div>
+</body>
+
+</html>
